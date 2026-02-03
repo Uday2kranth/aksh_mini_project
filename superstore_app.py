@@ -66,7 +66,7 @@ CATEGORICAL_COLUMNS = [
 
 
 @st.cache_data
-def load_data() -> pd.DataFrame:
+def load_data() -> tuple[pd.DataFrame, dict]:
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Dataset not found at {DATA_PATH}")
 
@@ -81,6 +81,11 @@ def load_data() -> pd.DataFrame:
     if missing_cols:
         raise ValueError(f"Missing required columns: {', '.join(sorted(missing_cols))}")
 
+    preprocess_info = {
+        "raw_rows": len(df),
+        "raw_columns": len(df.columns),
+    }
+
     # Normalize column types
     for col in NUMERIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -89,8 +94,18 @@ def load_data() -> pd.DataFrame:
         df[col] = df[col].astype("string")
 
     # Basic cleanup
+    numeric_nulls = df[NUMERIC_COLUMNS].isna().sum().sum()
+    duplicates = df.duplicated().sum()
     df = df.dropna(subset=NUMERIC_COLUMNS)
     df = df.drop_duplicates()
+
+    preprocess_info.update(
+        {
+            "numeric_nulls_removed": int(numeric_nulls),
+            "duplicates_removed": int(duplicates),
+            "final_rows": len(df),
+        }
+    )
 
     # Add a safe discount bucket
     df["Discount_Range"] = pd.cut(
@@ -100,7 +115,7 @@ def load_data() -> pd.DataFrame:
         include_lowest=True,
     )
 
-    return df
+    return df, preprocess_info
 
 
 # -----------------------------
@@ -172,7 +187,7 @@ st.title("🏪 Superstore Data Analytics Dashboard")
 st.markdown("---")
 
 try:
-    df = load_data()
+    df, preprocess_info = load_data()
 
     tab_eda, tab_viz, tab_ml = st.tabs(
         ["📊 EDA", "📈 Visualizations", "🤖 ML Model"]
@@ -204,6 +219,22 @@ try:
         with col2:
             st.info(f"Rows: {df.shape[0]:,} | Columns: {df.shape[1]}")
             st.write(", ".join(df.columns.tolist()))
+
+        st.markdown("---")
+
+        st.subheader("🧪 Preprocessing Summary")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Raw Rows", f"{preprocess_info['raw_rows']:,}")
+        with col2:
+            st.metric("Rows After Cleanup", f"{preprocess_info['final_rows']:,}")
+        with col3:
+            st.metric("Duplicates Removed", f"{preprocess_info['duplicates_removed']:,}")
+
+        st.caption(
+            "Numeric nulls removed: "
+            f"{preprocess_info['numeric_nulls_removed']:,}"
+        )
 
         st.markdown("---")
 
