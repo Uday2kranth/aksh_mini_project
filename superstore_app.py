@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from pathlib import Path
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.model_selection import train_test_split
@@ -30,9 +31,11 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Load data
+DATA_PATH = Path(__file__).parent / "superstore data.csv"
+
 @st.cache_data
 def load_data():
-    df = pd.read_csv('superstore data.csv')
+    df = pd.read_csv(DATA_PATH, encoding="utf-8", low_memory=False)
     return df
 
 # Main title
@@ -116,7 +119,7 @@ try:
         
         with tab_cat:
             st.write("**Categorical Columns Distribution:**")
-            categorical_cols = df.select_dtypes(include=['object']).columns
+            categorical_cols = df.select_dtypes(include=['object', 'string']).columns
             
             for col in categorical_cols:
                 with st.expander(f"📌 {col}"):
