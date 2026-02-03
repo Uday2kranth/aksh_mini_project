@@ -1,0 +1,8 @@
+pandas
+numpy<2.0.0
+scikit-learn
+matplotlib
+seaborn
+streamlit
+plotly>=5.0
+pyarrow<15.0.0
