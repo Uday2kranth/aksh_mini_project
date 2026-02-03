@@ -3,5 +3,9 @@ numpy<2.0.0
 scikit-learn
 streamlit
 plotly>=5.0
+<<<<<<< HEAD
 
 altair
+=======
+altair
+>>>>>>> d75b872eb0d9f33580900e5407f9ed910a0e68c9
